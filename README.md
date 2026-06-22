@@ -1,158 +1,181 @@
-[Github Repo Scraper](https://apify.com/joyouscam35875/github-repo-scraper?fpr=data)
+[Github Repo Scraper](https://apify.com/sovereigntaylor/github-repo-scraper?fpr=data)
 
-Scrape GitHub repository metadata at scale using the official REST API v3. Get structured data on stars, forks, languages, topics, contributors, releases, and more — ready for lead generation, market research, and competitive analysis.
+# GitHub Repository Scraper
 
-## What it does
+Scrape any GitHub repository for comprehensive metadata — stars, forks, issues, pull requests, contributors, languages, topics, releases, license, last commit, README preview, and homepage URL. Search repositories by keyword with language and star count filters.
 
-- **Scrape specific repos** — provide a list of `owner/repo` strings
-- **Search GitHub** — use any [GitHub search syntax](https://docs.github.com/en/search-github/searching-on-github/searching-for-repositories) to discover repos
-- **Enrich with extras** — optionally fetch top contributors and latest releases
-- **Handle rate limits** — automatic back-off with `X-RateLimit` headers; optional token support for 5,000 req/hr
+## What does GitHub Repository Scraper do?
 
-## Output fields
+This actor extracts detailed information from GitHub repository pages. You can either provide direct repository URLs or use search queries to discover repositories matching your criteria. Every scraped repository returns a rich data object with 18+ fields covering popularity, activity, and technical details.
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `owner` | string | Repository owner login |
-| `name` | string | Repository name |
-| `fullName` | string | `owner/name` |
-| `url` | string | GitHub URL |
-| `description` | string | Repository description |
-| `stars` | int | Stargazer count |
-| `forks` | int | Fork count |
-| `openIssues` | int | Open issue count |
-| `language` | string | Primary language |
-| `languages` | object | All languages with byte counts |
-| `topics` | array | Topic tags |
-| `createdAt` | string | ISO 8601 creation date |
-| `updatedAt` | string | Last update date |
-| `pushedAt` | string | Last push date |
-| `license` | string | SPDX license identifier |
-| `isArchived` | bool | Whether the repo is archived |
-| `isFork` | bool | Whether the repo is a fork |
-| `defaultBranch` | string | Default branch name |
-| `size` | int | Repository size in KB |
-| `watchers` | int | Watcher/subscriber count |
-| `homepage` | string | Homepage URL |
-| `topContributors` | array | Top 30 contributors (opt-in) |
-| `latestReleases` | array | Last 5 releases (opt-in) |
+Unlike GitHub's API (which requires authentication and has strict rate limits), this scraper works without any API key and extracts data directly from GitHub's public pages.
 
-## Input examples
+## Features
+
+- **Direct URL scraping** — Provide any GitHub repo URL and get full metadata
+- **Keyword search** — Find repos by keyword, language, and star count
+- **18+ data fields** — Stars, forks, watchers, issues, PRs, contributors, languages, topics, releases, license, last commit, README preview, homepage
+- **Multiple extraction strategies** — Embedded JSON-LD, meta tags, and DOM parsing for maximum reliability
+- **Deduplication** — No duplicate repos in output, even with overlapping search results
+- **Pagination** — Automatically follows GitHub search pagination up to 1,000 results
+- **Proxy support** — Built-in proxy rotation to avoid rate limiting on large scrapes
+
+## Input
+
+| Field | Type | Default | Description |
+| --- | --- | --- | --- |
+| repoUrls | array | [] | Direct GitHub repository URLs to scrape |
+| searchQuery | string | null | Search repos by keyword (e.g., "web scraper") |
+| language | string | null | Filter by language (e.g., "python", "javascript") |
+| sortBy | enum | "stars" | Sort: stars, forks, updated, best_match |
+| minStars | integer | 0 | Minimum star count filter |
+| maxResults | integer | 200 | Maximum repos to return (up to 1,000) |
+| proxyConfiguration | object | Apify Proxy | Proxy settings for rate limit avoidance |
+
+## Output
+
+Each repository produces a data object like this:
+
+```
+{
+  "name": "react",
+  "owner": "facebook",
+  "fullName": "facebook/react",
+  "description": "The library for web and native user interfaces.",
+  "stars": 232145,
+  "forks": 47523,
+  "watchers": 6723,
+  "openIssues": 983,
+  "pullRequests": 287,
+  "language": "JavaScript",
+  "languages": ["JavaScript", "TypeScript", "HTML", "CSS"],
+  "license": "MIT",
+  "topics": ["react", "javascript", "frontend", "ui", "declarative"],
+  "lastCommit": "2026-03-01T14:32:00Z",
+  "contributors": 1847,
+  "releases": 215,
+  "readmePreview": "React is a JavaScript library for building user interfaces...",
+  "homepage": "https://react.dev",
+  "url": "https://github.com/facebook/react",
+  "scrapedAt": "2026-03-02T10:15:30Z"
+}
+```
+
+## Use Cases
+
+### Tech Stack Research
+
+Discover and compare frameworks, libraries, and tools in any programming language. Filter by stars and activity to find the most popular and actively maintained options.
+
+### Competitor Analysis
+
+Monitor competitor open source projects — track star growth, contributor activity, release frequency, and community engagement.
+
+### Open Source Intelligence (OSINT)
+
+Gather intelligence on organizations' tech stacks by analyzing their public repositories. Identify technologies, team size (contributors), and development velocity.
+
+### Hiring & Talent Research
+
+Find active open source contributors in specific languages or frameworks. Identify prolific developers by exploring contributor data across popular repositories.
+
+### Investment & Market Research
+
+Spot emerging technologies by tracking rapidly growing repositories. Compare star counts, fork rates, and contributor growth across competing projects.
+
+### Academic Research
+
+Collect structured data on open source software ecosystems for academic studies. Analyze language trends, licensing patterns, and community dynamics.
+
+## Examples
 
 ### Scrape specific repositories
 
 ```
 {
-    "repos": ["apify/crawlee", "microsoft/playwright", "facebook/react"]
+  "repoUrls": [
+    "https://github.com/facebook/react",
+    "https://github.com/vuejs/vue",
+    "https://github.com/angular/angular"
+  ]
 }
 ```
 
-### Search for Python web scraping tools
+### Search for Python machine learning repos with 1000+ stars
 
 ```
 {
-    "searchQuery": "web scraping language:python stars:>100",
-    "maxRepos": 50
+  "searchQuery": "machine learning",
+  "language": "python",
+  "minStars": 1000,
+  "sortBy": "stars",
+  "maxResults": 100
 }
 ```
 
-### Full enrichment with auth
+### Find the most-forked JavaScript frameworks
 
 ```
 {
-    "repos": ["vercel/next.js"],
-    "searchQuery": "framework language:typescript stars:>5000",
-    "maxRepos": 100,
-    "includeContributors": true,
-    "includeReleases": true,
-    "githubToken": "ghp_xxxxxxxxxxxx"
+  "searchQuery": "framework",
+  "language": "javascript",
+  "sortBy": "forks",
+  "maxResults": 50
 }
 ```
 
-## Rate limits
+### Discover recently updated Rust projects
 
-| Mode | Requests/hour | Repos/run (approx) |
-| --- | --- | --- |
-| No token | 60 | ~20–30 (2–3 API calls per repo) |
-| With token | 5,000 | ~1,500–2,500 |
-
-**Tip:** Create a free [personal access token](https://github.com/settings/tokens) (no scopes needed for public repos) to unlock 5,000 requests/hour.
+```
+{
+  "searchQuery": "async runtime",
+  "language": "rust",
+  "sortBy": "updated",
+  "maxResults": 30
+}
+```
 
 ## Pricing
 
-**$0.002 per repository scraped** (pay per event).
+Pay per result — you only pay for repositories successfully scraped. See the Pricing tab for current rates. Each repository with full metadata counts as one event.
 
-### Cost comparison
+## Rate Limits & Proxies
 
-| Repos | This actor | GitHub API (your infra) | Manual research |
-| --- | --- | --- | --- |
-| 10 | $0.02 | Free + your time | ~30 min |
-| 100 | $0.20 | Free + your time | ~5 hours |
-| 500 | $1.00 | Free + your time | ~2 days |
-| 1,000 | $2.00 | Free + your time | ~1 week |
+GitHub allows unauthenticated access but may rate-limit aggressive scraping. For scrapes of 100+ repositories, enabling Apify Proxy is recommended. The actor automatically rotates user agents and adds delays to respect GitHub's servers.
 
-**You pay for data, not infrastructure.** No servers to maintain, no code to write, no rate limits to handle.
+## Limitations
 
-## Use cases
+- GitHub search returns a maximum of 1,000 results per query
+- Some private or restricted repositories may not be accessible
+- Contributor counts on very large repos (10,000+ contributors) may be approximate
+- README preview is truncated to the first 500 characters
 
-- **Lead generation** — Find companies using specific technologies, contact repo owners
-- **Competitive analysis** — Track competitor open-source projects, compare stars/forks growth
-- **Technology research** — Discover trending tools in any language or domain
-- **Talent sourcing** — Identify top contributors to relevant projects
-- **Investment research** — Gauge open-source traction for developer tools companies
-- **Academic research** — Collect repository metadata for software engineering studies
-- **Dependency auditing** — Assess health (activity, issues, releases) of your dependencies
-
-## Technical details
-
-- Uses GitHub REST API v3 (`api.github.com`)
-- Automatic rate-limit detection and back-off via `X-RateLimit-*` headers
-- No browser or proxy needed — pure API calls
-- Async execution with `httpx` for fast throughput
-- Outputs clean, structured JSON to the Apify dataset
-
----
-
-## 🔗 More Scrapers by Ken Digital
-
-| Scraper | What it does | Price |
-| --- | --- | --- |
-| [YouTube Channel Scraper](https://apify.com/joyouscam35875/youtube-channel-scraper) | Videos, stats, metadata | $0.001/video |
-| [France Job Scraper](https://apify.com/joyouscam35875/france-job-scraper) | WTTJ + France Travail + Hellowork | $0.005/job |
-| [France Real Estate Scraper](https://apify.com/joyouscam35875/france-real-estate-scraper) | 5 sources + DVF price analysis | $0.008/listing |
-| [Website Content Crawler](https://apify.com/joyouscam35875/website-content-crawler) | HTML → Markdown for AI/RAG | $0.001/page |
-| [Google Trends Scraper](https://apify.com/joyouscam35875/google-trends-scraper) | Keywords, regions, related queries | $0.002/keyword |
-| [GitHub Repo Scraper](https://apify.com/joyouscam35875/github-repo-scraper) | Stars, forks, languages, topics | $0.002/repo |
-| [RSS News Aggregator](https://apify.com/joyouscam35875/rss-news-aggregator) | Multi-source feed parsing | $0.0005/article |
-| [Instagram Profile Scraper](https://apify.com/joyouscam35875/instagram-profile-scraper) | Followers, bio, posts | $0.0015/profile |
-| [Google Maps Scraper](https://apify.com/joyouscam35875/google-maps-scraper) | Businesses, reviews, contacts | $0.002/result |
-| [TikTok Scraper](https://apify.com/joyouscam35875/tiktok-scraper) | Videos, likes, shares | $0.001/video |
-| [Google SERP Scraper](https://apify.com/joyouscam35875/google-serp-scraper) | Search results, PAA, snippets | $0.003/search |
-| [Trustpilot Scraper](https://apify.com/joyouscam35875/trustpilot-scraper) | Reviews, ratings, sentiment | $0.001/review |
-
-👉 [View all scrapers](https://apify.com/joyouscam35875)
-
-## 🔗 Quick Integration
-
-### Python
+## Integration — Python
 
 ```
 from apify_client import ApifyClient
+
 client = ApifyClient("YOUR_API_TOKEN")
-run = client.actor("joyouscam35875/github-repo-scraper").call(run_input={...})
+run = client.actor("sovereigntaylor/github-repo-scraper").call(run_input={
+    "searchTerm": "github repo",
+    "maxResults": 50
+})
+
 for item in client.dataset(run["defaultDatasetId"]).iterate_items():
-    print(item)
+    print(f"{item.get('title', item.get('name', 'N/A'))}")
 ```
 
-### Node.js
+## Integration — JavaScript
 
 ```
 import { ApifyClient } from 'apify-client';
 const client = new ApifyClient({ token: 'YOUR_API_TOKEN' });
-const run = await client.actor('joyouscam35875/github-repo-scraper').call({...});
+
+const run = await client.actor('sovereigntaylor/github-repo-scraper').call({
+    searchTerm: 'github repo',
+    maxResults: 50
+});
+
 const { items } = await client.dataset(run.defaultDatasetId).listItems();
+items.forEach(item => console.log(item.title || item.name || 'N/A'));
 ```
-
-### No-code: Make / Zapier / n8n
-
-Search for this actor in the Apify connector. No code needed.
